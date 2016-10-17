@@ -8,4 +8,4 @@ clean:
 	rm -rf env
 
 run: env
-	./run defaults.env web
+	./run defaults.env local.env web
