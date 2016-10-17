@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-cd /root/gdr.rocks
+cd /root/
 
 git pull
 env/bin/pip install --upgrade -r requirements.txt

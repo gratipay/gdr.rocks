@@ -1,9 +1,8 @@
 # Suppress attempts to mail output. We'll check syslog.
 MAILTO=""
-PYTHON=/root/gdr.rocks/env/bin/python
 
 # Poll for updates every minute.
-*    *    *    *    *    /root/gdr.rocks/update-if-needed.sh 2>&1 | logger -t UPDATE-GDR
+*    *    *    *    *    /root/update-if-needed.sh 2>&1 | logger -t UPDATE-GDR
 
 #    ┬    ┬    ┬    ┬
 #    │    │    │    │
