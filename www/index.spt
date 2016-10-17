@@ -1,0 +1,49 @@
+"""This is the Gratipay Dependency Resolver.
+"""
+[---]
+[---] text/html
+<h1>GDR</h1>
+<p>You've found the <a href="https://gratipay.com/">Gratipay</a> Dependency Resolver!</p>
+
+<h2>Usage</h2>
+<p><code>POST</code> an image (up to 256 kB) to <code>/v1</code> with a
+<code>Content-Type</code> of <code>image/png</code> or <code>image/jpeg</code>,
+and receive back a ZIP file with 160x160 and 48x48 crops in the same
+format.</p>
+
+<h2>Examples</h2>
+
+<h3>curl</h3>
+
+<pre><code class="bash">$ curl http://gip.rocks/v1 --data-binary "@foo.jpg" --header "Content-Type: image/jpeg" > crops.zip
+  %% Total    %% Received %% Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 71743    0  1670  100 70073   2148  90130 --:--:-- --:--:-- --:--:-- 90068
+$ unzip crops.zip
+Archive:  crops.zip
+  inflating: 160                     
+  inflating: 48                      
+$</code></pre>
+
+<h3>Python</h3>
+
+<pre><code class="python">import requests, zipfile
+from cStringIO import StringIO
+
+response = requests.post( 'http://gip.rocks/v1'
+                        , data=open('foo.jpg').read()
+                        , headers={'Content-Type': 'image/jpeg'}
+                         )
+assert response.status_code == 200
+fp = StringIO(response.content)
+zf = zipfile.ZipFile(fp)
+
+save = lambda zname, fname: open(fname, 'w+').write(zf.open(zname).read())
+save('160', 'big.jpg')
+save('48', 'small.jpg')</code></pre>
+
+<a href="https://github.com/gratipay/gip.rocks/"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/styles/agate.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>

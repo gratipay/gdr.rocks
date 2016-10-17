@@ -1,0 +1,19 @@
+from aspen import Response
+
+import gdr
+
+[---]
+request.allow('POST')
+
+if int(request.headers['Content-Length']) > 64 * 1024:
+    raise Response(413)
+
+out = []
+for upload in request.body.all('file'):
+    if upload.filename not in gdr.resolvers:
+        out.append({"error": "unrecognized filename"})
+    else:
+        out.append({"deps": gdr.resolve(upload.filename, upload.value)})
+
+[---] application/json via json_dump
+out

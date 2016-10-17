@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import os
+import sys
+import shlex
+from string import Template
+from collections import defaultdict
+
+
+if sys.version_info[0] < 3:
+    strtype = unicode
+else:
+    strtype = str
+
+
+def fail(m='', *a):
+    if m:
+        print(m.format(*a))
+    print("usage: {0} <foo.env>* <cmd>".format(os.path.basename(sys.argv[0])))
+    sys.exit(1)
+
+
+def update_env(envfilepaths, verbose=False):
+    for envfilepath in envfilepaths:
+        try:
+            envfile = open(envfilepath)
+        except IOError:
+            if verbose:
+                print("WARNING: Ignoring missing environment file {}.".format(envfilepath))
+            continue
+        try:
+            for line in envfile:
+                line = line.split('#', 1)[0].strip()
+                if not line:
+                    continue
+                k, v = [x.strip() for x in line.split('=', 1)]
+                if v and v[0] in ('"', "'"):
+                    v = v[1:-1]
+                os.environ[k] = v
+        except:
+            print("CHOKED ON: {}".format(line))
+            raise
+        if verbose:
+            print("SUCCESS: Updated environment with values from {}.".format(envfilepath))
+
+
+if len(sys.argv) < 2:
+    fail()
+
+envfilepaths = []
+for i, arg in enumerate(sys.argv[1:]):
+    if arg == '-':
+        envfilepaths.append('/dev/stdin')
+    elif arg.endswith('.env'):
+        envfilepaths.append(arg)
+    else:
+        break
+
+command = " ".join(sys.argv[i+1:])
+
+update_env(envfilepaths)
+subenv = defaultdict(strtype)
+subenv.update(os.environ)
+
+try:
+    procfile = open('Procfile')
+except IOError:
+    pass
+else:
+    for line in procfile:
+        candidate, new_command = [x.strip() for x in line.split(':', 1)]
+        if candidate == command:
+            command = new_command
+            break
+
+tmp = Template(command)
+subbed = tmp.substitute(subenv)
+parts = shlex.split(subbed)
+
+os.execvp(parts[0], parts)
