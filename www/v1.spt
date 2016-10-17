@@ -13,7 +13,10 @@ for upload in request.body.all('file'):
     if upload.filename not in gdr.resolvers:
         out.append({"error": "unrecognized filename"})
     else:
-        out.append({"deps": gdr.resolve(upload.filename, upload.value)})
+        try:
+            out.append({"deps": gdr.resolve(upload.filename, upload.value)})
+        except ResolutionError as e:
+            out.append({"error": e.args[0]})
 
 [---] application/json via json_dump
 out

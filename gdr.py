@@ -6,14 +6,17 @@ import sys
 from subprocess import Popen as Process, PIPE
 
 
-class ProcessFailure(RuntimeError):
+class ProcessError(RuntimeError):
+    pass
+
+class ResolutionError(RuntimeError):
     pass
 
 
 def run(cmd):
     out, err = Process(cmd.split(), stdout=PIPE, stderr=PIPE).communicate()
     if err:
-        raise ProcessFailure(err)
+        raise ProcessError(err)
     return out
 
 
@@ -28,6 +31,7 @@ def requirements_txt(raw):
         path = 'env/lib/python2.7/site-packages/{}-{}.dist-info/METADATA'.format(name, version)
         license = 'n/a'
         for line in open(path):
+            line = line.decode('utf8')
             if line.startswith('License:'):
                 license = line.split()[1]
         yield {'name': name, 'version': version, 'license': license}
@@ -41,6 +45,8 @@ def resolve(filename, content):
     if filename not in resolvers: raise Exception  # sanity check
     proc = Process(['docker', 'run', '-i', 'gdr', filename], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     out, err = proc.communicate(content)
+    if err:
+        raise ResolutionError(err)
     return json.loads(out)
 
 

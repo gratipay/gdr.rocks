@@ -17,6 +17,15 @@ def test_resolve_resolves():
     assert len(deps) == 6         # vvv assumes case-insensitive ordering
     assert deps[1] == dict(name='Flask', version='0.11.1', license='BSD')
 
+def test_resolve_choketh_not_on_unicode():
+    deps = gdr.resolve('requirements.txt', 'requests==2.11.1')
+    assert deps[0] == dict(name='requests', version='2.11.1', license='Apache')
+
+def test_resolve_choketh_on_errors():
+    with pytest.raises(gdr.ResolutionError) as e:
+        gdr.resolve('requirements.txt', 'this is a bad requirements.txt')
+    assert e.value.args[0].startswith('Traceback')
+
 
 def test_v1_can_be_hit(client):
     file_upload = FileUpload(filename='requirements.txt', data='Flask==0.11.1')
