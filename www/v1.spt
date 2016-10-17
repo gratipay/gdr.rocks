@@ -5,7 +5,7 @@ import gdr
 [---]
 request.allow('POST')
 
-if int(request.headers['Content-Length']) > 64 * 1024:
+if int(request.headers['Content-Length']) > 256 * 1024:
     raise Response(413)
 
 out = []
