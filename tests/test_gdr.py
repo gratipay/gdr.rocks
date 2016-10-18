@@ -7,27 +7,7 @@ import pytest
 import gdr
 
 
-@pytest.fixture
-def client():
-    return Client('www', '.')
-
-
-def test_resolve_resolves():
-    deps = gdr.resolve('requirements.txt', 'Flask==0.11.1')
-    assert len(deps) == 6         # vvv assumes case-insensitive ordering
-    assert deps[1] == dict(name='Flask', version='0.11.1', license='BSD')
-
-def test_resolve_choketh_not_on_unicode():
-    deps = gdr.resolve('requirements.txt', 'requests==2.11.1')
-    assert deps[0] == dict(name='requests', version='2.11.1', license='Apache')
-
-def test_resolve_choketh_on_errors():
-    with pytest.raises(gdr.ResolutionError) as e:
-        gdr.resolve('requirements.txt', 'this is a bad requirements.txt')
-    assert e.value.args[0].startswith('Traceback')
-
-def test_resolve_choketh_not_on_rtd():
-    reqs = """\
+RTD = """\
 # Base packages
 pip==8.1.1
 virtualenv==15.0.1
@@ -104,24 +84,46 @@ nilsimsa==0.3.7
 git+https://github.com/alex/django-filter.git#egg=django-filter
 git+https://github.com/ericflo/django-pagination.git@e5f669036c#egg=django_pagination-dev
 git+https://github.com/alex/django-taggit.git#egg=django_taggit-dev
-    """
-    deps = gdr.resolve('requirements.txt', reqs)
+"""
+
+
+@pytest.fixture
+def client():
+    return Client('www', '.')
+
+
+def test_resolve_resolves():
+    deps = gdr.resolve('requirements.txt', 'Flask==0.11.1')
+    assert len(deps) == 6         # vvv assumes case-insensitive ordering
+    assert deps[1] == dict(name='Flask', version='0.11.1', license='BSD')
+
+def test_resolve_choketh_not_on_unicode():
+    deps = gdr.resolve('requirements.txt', 'requests==2.11.1')
+    assert deps[0] == dict(name='requests', version='2.11.1', license='Apache')
+
+def test_resolve_choketh_on_errors():
+    with pytest.raises(gdr.ResolutionError) as e:
+        gdr.resolve('requirements.txt', 'this is a bad requirements.txt')
+    assert e.value.args[0].startswith('Traceback')
+
+def test_resolve_choketh_not_on_rtd():
+    deps = gdr.resolve('requirements.txt', RTD)
     assert len(deps) == 90
     assert deps[14] == dict(name='Django', version='1.8.3', license='BSD')
 
 
 def test_v1_can_be_hit(client):
     file_upload = FileUpload(filename='requirements.txt', data='Flask==0.11.1')
-    out = json.loads(client.POST('/v1', data={'file': file_upload}).body)
-    assert len(out) == 1
-    assert len(out[0]['deps']) == 6
-    assert out[0]['deps'][1] == dict(name='Flask', version='0.11.1', license='BSD')
+    deps = json.loads(client.POST('/v1', data={'file': file_upload}).body)
+    assert len(deps) == 1
+    assert len(deps[0]['deps']) == 6
+    assert deps[0]['deps'][1] == dict(name='Flask', version='0.11.1', license='BSD')
 
 def test_v1_can_hit_back(client):
     file_upload = FileUpload(filename='requirements.txt', data='Flasky garbage')
-    out = json.loads(client.POST('/v1', data={'file': file_upload}).body)
-    assert len(out) == 1
-    assert out[0]['error'].startswith('Traceback')
+    deps = json.loads(client.POST('/v1', data={'file': file_upload}).body)
+    assert len(deps) == 1
+    assert deps[0]['error'].startswith('Traceback')
 
 def test_v1_accepts_multiple_files(client):
     one = FileUpload(filename='requirements.txt', data='Flask==0.11.1')
@@ -132,9 +134,15 @@ def test_v1_accepts_multiple_files(client):
             for f in (one, two):
                 yield 'file', f
 
-    out = json.loads(client.POST('/v1', data=Kludge()).body)
-    assert len(out) == 2
-    assert len(out[0]['deps']) == 6
-    assert out[0]['deps'][1] == dict(name='Flask', version='0.11.1', license='BSD')
-    assert len(out[1]['deps']) == 1
-    assert out[1]['deps'][0] == dict(name='itsdangerous', version='0.24', license='UNKNOWN')
+    deps = json.loads(client.POST('/v1', data=Kludge()).body)
+    assert len(deps) == 2
+    assert len(deps[0]['deps']) == 6
+    assert deps[0]['deps'][1] == dict(name='Flask', version='0.11.1', license='BSD')
+    assert len(deps[1]['deps']) == 1
+    assert deps[1]['deps'][0] == dict(name='itsdangerous', version='0.24', license='UNKNOWN')
+
+def test_v1_can_handle_rtd(client):
+    file_upload = FileUpload(filename='requirements.txt', data=RTD)
+    deps = json.loads(client.POST('/v1', data={'file': file_upload}).body)
+    assert len(deps[0]['deps']) == 90
+    assert deps[0]['deps'][14] == dict(name='Django', version='1.8.3', license='BSD')
