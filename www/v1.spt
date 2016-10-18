@@ -15,7 +15,7 @@ for upload in request.body.all('file'):
     else:
         try:
             out.append({"deps": gdr.resolve(upload.filename, upload.value)})
-        except ResolutionError as e:
+        except gdr.ResolutionError as e:
             out.append({"error": e.args[0]})
 
 [---] application/json via json_dump

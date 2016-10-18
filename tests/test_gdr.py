@@ -117,6 +117,11 @@ def test_v1_can_be_hit(client):
     assert len(out[0]['deps']) == 6
     assert out[0]['deps'][1] == dict(name='Flask', version='0.11.1', license='BSD')
 
+def test_v1_can_hit_back(client):
+    file_upload = FileUpload(filename='requirements.txt', data='Flasky garbage')
+    out = json.loads(client.POST('/v1', data={'file': file_upload}).body)
+    assert len(out) == 1
+    assert out[0]['error'].startswith('Traceback')
 
 def test_v1_accepts_multiple_files(client):
     one = FileUpload(filename='requirements.txt', data='Flask==0.11.1')
