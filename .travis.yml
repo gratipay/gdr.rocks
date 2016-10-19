@@ -1,0 +1,22 @@
+language: python
+services: docker
+branches:
+  only:
+    - master
+before_install:
+ - git branch -vv | grep '^*'
+ - docker build -t gdr .
+ - docker images
+cache:
+  directories:
+    - env/bin
+    - env/lib/python2.7/site-packages
+install:
+ - if [ "${TRAVIS_BRANCH}" = "master" -a "${TRAVIS_PULL_REQUEST}" = "false" ]; then rm -rf env; fi
+ - touch requirements.txt
+ - make env
+script: pytest --cov gdr tests/
+notifications:
+  email: false
+  irc: false
+sudo: false
